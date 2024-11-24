@@ -2,24 +2,54 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        int votantesTotal = 1564082;
+        int votantesTotal;
         int votosTotal;
-        int totalEscanios = 12;
+        int totalEscanios;
         
-        String[] partidos = {"PP", "PSOE", "VOX", "SUMAR", "P ANIMALISTA", "FRENTE OBRERO", "RECORTES CERO"};
+        // SE PIDEN LOS DATOS AL USUARIO
 
+        System.out.println("Cúal es el censo total?");
+        votantesTotal = scInt();
+        
+        System.out.println("Cúantos escaños se van a repartir?");
+        totalEscanios = scInt();
+     
+        System.out.println("¿Cuántos grupos hay?");
+        int numPartidos = scInt();
+
+        // SE CREAN LOS ARRAYS QUE AYUDARAN PARA GUARDAR LA INFORMACIÓN DE LOS PARTIDOS E IMPRIMIRLAS
+
+        String[] nombresPartidos = new String[numPartidos];
         String[] datosGruposStr = {"GRUPO", "VOTOS", "% CENSO", "% EMITIDOS", "ESCAÑOS"};
-        double[][] datosGrupos = new double[7][4];
+        double[][] datosGrupos = new double[nombresPartidos.length][4];
 
+
+        
         double votosEmitidos=0, abstencion=0, votosValidos=0, votosBlanco=0, votosNulos=0;
         boolean bucle = true;
 
+
+        // SE PIDEN LOS NOMBRES DE LOS PARTIDOS
+        for (int i = 0; i < nombresPartidos.length; i++) {
+            System.out.println("Introduce el nombre de un partido:");          
+            try {
+                nombresPartidos[i] = new Scanner(System.in).nextLine();
+            } catch (Exception e) {
+                System.out.println("Ha habido un error en la introducción del nombre, introduzcalo de nuevo:");
+                i--;
+            }
+        }
+
         
+        // SE PIDE EL NUMERO DE VOTOS DE CADA PARTIDO, VOTOS EN BLANCO Y NULOS, SI LA SUMA DE LA CANTIDAD DE VOTOS INTRODUCIDA
+        // SUPERA EL CENSO, SE VOLVERAN A PREGUNTAR LOS VOTOS.
         do {
-            introducirVotos(partidos, datosGrupos);
-            votosTotal = calcularNumeroVotos(datosGrupos);        
-            votosBlanco = (double)pedirVotosBlancos();               
-            votosNulos = (double)pedirVotosNulos();
+            introducirVotos(nombresPartidos, datosGrupos);
+            votosTotal = calcularNumeroVotos(datosGrupos);
+            System.out.println("Introduce los números de votos en blanco:");       
+            votosBlanco = scInt();
+            System.out.println("Introduce los números de votos nulos:");             
+            votosNulos = scInt();
 
             int suma = (int) (votosTotal + votosBlanco + votosNulos);
 
@@ -28,17 +58,22 @@ public class Main {
             }else bucle = false;
         } while (bucle);
         
+
+        // OPERACIONES PARA SACAR PORCENTAJES DE LA TABLA ACTA ELECTORAL
         votosEmitidos = (double)(votosTotal * 100) / votantesTotal;
         abstencion = (((votantesTotal-votosTotal)*100)/(double)votantesTotal);
         votosBlanco = (votosBlanco*100)/votosTotal;
         votosNulos = (votosNulos*100)/votosTotal;
         votosValidos =((votosTotal-votosNulos)*100)/votosTotal;
         
+        // ARRAYS PARA IMPRIMIR EL ACTA ELECTORAL Y LLAMADA AL METODO QUE LO IMPRIME.
         String[] actaElectoralStr = {"Votos Emitidos", "Abstención", "Votos Validos", "Votos en blanco", "Votos nulos"};
         double[] actaElectoral = {votosEmitidos, abstencion, votosValidos, votosBlanco, votosNulos};
         imprimirActaElectoral(actaElectoralStr, actaElectoral);
         System.out.println();
   
+
+        // METODOS QUE CALCULAN PORCENTAJE DE CENSO Y EMITIDOS DE CADA PARTIDO
         calcularCensoGrupos(datosGrupos, votantesTotal);
         calcularEmitidosGrupos(datosGrupos, votosTotal); 
 
@@ -46,23 +81,18 @@ public class Main {
         System.out.println();
         double[][] arrDhondt = generarArrDhondt(datosGrupos, totalEscanios);
         repartirEscanios(arrDhondt, datosGrupos, totalEscanios);
-        imprimirArrDhondt(arrDhondt, partidos);
+            //imprimirArrDhondt(arrDhondt, nombresPartidos);
     
-        imprimirDatosGrupos(partidos, datosGruposStr, datosGrupos);
+        imprimirDatosGrupos(nombresPartidos, datosGruposStr, datosGrupos);
     }
 
     ///////////////////////////////METODOS////////////////////////////////////////////
     public static void introducirVotos(String[] partidos, double[][] datosGrupos){
         for (int i = 0; i < partidos.length; i++) {
             System.out.printf("Introduce los votos de %s:",partidos[i]);
-            try {
                 datosGrupos[i][0] = scInt();
-            } catch (Exception e) {
-                i--;
-            }
             
         }
-
     }
 
     public static void imprimirDatosGrupos(String[] partidos, String[] datosGruposStr, double[][] datosGrupos){
@@ -92,7 +122,7 @@ public class Main {
             System.out.println();
         }
     }
-    // ACTA ELECTORAL
+
     public static int calcularNumeroVotos( double[][] datosGrupos){
         int totalVotos = 0;
         for (int i = 0; i < datosGrupos.length; i++) {
@@ -101,35 +131,6 @@ public class Main {
         return totalVotos;
     }
 
-    public static int pedirVotosBlancos(){
-        boolean b = false;
-        int n = 0;
-        do {
-            try {
-                System.out.println("Introduce el número total de votos blancos");
-                n = scInt();
-                b = false;
-            } catch (Exception e) {
-                b = true;
-            }
-        } while (b);
-        return n;
-    }
-
-    public static int pedirVotosNulos(){
-        boolean b = false;
-        int n = 0;
-        do {
-            try {
-                System.out.println("Introduce el número total de votos nulos");
-                n = scInt();
-                b = false;
-            } catch (Exception e) {
-                b = true;
-            }
-        } while (b);
-        return n;
-    }
     
     //  CALCULO CENSO Y EMITIDO GRUPOS.
     public static void calcularCensoGrupos(double[][] datosGrupos, int votantesTotal){
@@ -148,7 +149,7 @@ public class Main {
 
     public static double[][] generarArrDhondt(double[][] datosGrupos, int totalEscanios){
     
-    double[][] arr = new double[7][totalEscanios];
+    double[][] arr = new double[datosGrupos.length][totalEscanios];
 
     for (int i = 0; i < arr.length; i++) {
         double n = datosGrupos[i][0];
@@ -173,31 +174,48 @@ public class Main {
 
     public static void repartirEscanios(double[][] arrDhondt, double[][] datosGrupos, int totalEscanios){
 
-        int mayor;
+        int posPartidoMasVotos;
+        int[] posPartidosArrDhont = new int[datosGrupos.length]; // AQUI SE GUARDARAN EL NÚMERO DE ESCAÑOS QUE LLEVA CADA GRUPO Y ASI PODER COMPARAR EL SIGUIENTE
+                                                                 // VALOR DEL ARRAY DHONT
         
         for (int i = 0; i < totalEscanios; i++) {
-            mayor = 0;
+            posPartidoMasVotos = 0; // POSICION DEL PARTIDO CON MAS VOTOS, INICIADO EN 0.
             for (int g = 1; g < arrDhondt.length; g++) {
+                //EL BUBLE EN SU PRIMERA ITERACION COMPARA LOS VOTOS DEL PARTIDO 1 CON EL VALOR MAYOR, QUE SERIA EL PARTIDO EN LA POSICIÓN 0, 
+                //Y ASI COMPARANDO SUCESIVAMENTE EL SIGUIENTE CON EL MAYOR QUE SE GUARDA EN 'posPartidoMasVotos'
                 
-                double valorActual = arrDhondt[g][(int)datosGrupos[g][3]];
-                double valorMayor = arrDhondt[mayor][(int)datosGrupos[mayor][3]];
+                double valorActual = arrDhondt[g][posPartidosArrDhont[g]]; 
+                double valorMayor = arrDhondt[posPartidoMasVotos][(int)posPartidosArrDhont[posPartidoMasVotos]];
 
-
-                if( valorActual > valorMayor) mayor = g;  //COMPARO VALORES DEL ARRAY DHONDT Y ME QUEDO CON EL MAYOR
+                if( valorActual > valorMayor) posPartidoMasVotos = g;  //COMPARO VALORES DEL ARRAY DHONDT Y ME QUEDO CON EL MAYOR
 
                 else if(valorMayor == valorActual){ // SI ESOS VALORES SON IGUALES COMPARO LOS VOTOS
-                
-                    mayor = (datosGrupos[g][0] > datosGrupos[mayor][0]) ? g : mayor;
+                    
+                    posPartidoMasVotos = (posPartidosArrDhont[g] > posPartidosArrDhont[posPartidoMasVotos]) ? g : posPartidoMasVotos; // SI LOS VALORES SON IGUALES, COMPARA LOS ESCAÑOS DE CADA GRUPO
                 }
             }
-            datosGrupos[mayor][3]++;
+            datosGrupos[posPartidoMasVotos][3]++; // SE LE SUMA UN ESCAÑO AL MAYOR
+            posPartidosArrDhont[posPartidoMasVotos]++; // SE LE SUMA UN ESCAÑO AL MAYOR
         }
     }
 
-    // UTILIDADES REUTILIZACION PROGRAMACION
+    // UTILIDADES REUTILIZACION
 
     public static int scInt(){
-        Scanner sc = new Scanner(System.in);
-        return sc.nextInt();
+        int n = 0;
+        
+        boolean repeat = false;
+        do {
+            try {
+                Scanner sc = new Scanner(System.in);
+                n = sc.nextInt();
+                repeat = false;
+            } catch (Exception e) {
+                System.out.println("Ha ocurrido un error inesperado, introduce el número de nuevo (solo números, sin puntos ni comas)");
+                repeat = true;
+            }
+        } while (repeat);
+        
+        return n;
     }
 }
